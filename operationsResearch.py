@@ -173,7 +173,7 @@ class Simplex:
                     self.addArtificialVar(i)
                     self.varNames.append(f"R{i+1}")
 
-            self.isItStandard = True
+            self.isStandard = True
             
         return self.varNames
             
