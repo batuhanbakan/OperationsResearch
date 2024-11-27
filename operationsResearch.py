@@ -14,7 +14,36 @@ class Simplex:
 
         self.isStandard = False
         self.isOptimized = False
+
+        self.varNames = []
+        self.slackVarIndices = []
+        self.surplusVarIndices = []
+        self.artificialVarIndices = []
+        self.basicVarIndices = []
         
+        self.biggestValue = self.updateBiggestValue()
+        
+    def setVarNames(self):
+        
+        for i in range(len(self.obj)):
+            self.varNames.append(f"X{i+1}")
+
+    def mFix(self):
+        
+        self.row, self.col = self.lhs.shape
+        
+        for i in range(len(self.lhs)):
+            self.bi = self.basicVarIndices[i]
+            
+            if self.bi in self.artificialVarIndices:
+                
+                if self.opt == "MAX":
+                    self.obj = self.obj + (self.biggestValue * self.lhs[i, :])
+                    self.objValue = self.objValue - (self.biggestValue * self.rhs[i])
+                    
+                else:
+                    self.obj = self.obj - (self.biggestValue * self.lhs[i, :])
+                    self.objValue = self.objValue + (self.biggestValue * self.rhs[i])
         
     def updateBiggestValue(self):
         
@@ -29,8 +58,8 @@ class Simplex:
         if np.any(self.obj):
             self.big = np.append(self.big, self.obj.max())
             
-        self.biggestValue = self.big.max() * 10
-       
+        return self.big.max() * 10
+
 
     def invert(self, d):
 
@@ -57,8 +86,12 @@ class Simplex:
         self.lhs[self.constraintIndex][self.col] = 1
 
         self.obj = np.append(self.obj, 0.0)
+        
+        self.slackVarIndices.append(self.col)
+        self.basicVarIndices.append(self.col)
 
         self.dir[self.constraintIndex] = "EQ"
+        
 
 
     def addSurplusVar(self, constraintIndex):
@@ -72,13 +105,34 @@ class Simplex:
         self.lhs[self.constraintIndex][self.col] = -1
 
         self.obj = np.append(self.obj, 0.0)
+        
+        self.surplusVarIndices.append(self.col)
 
         self.dir[self.constraintIndex] = "EQ"
 
 
-    def addArtificialVar(self):
+    def addArtificialVar(self, constraintIndex):
+        
+        self.constraintIndex = constraintIndex
+        
+        self.row, self.col = self.lhs.shape
+        self.zs = np.zeros((self.row, 1))
 
-        pass
+        self.lhs = np.concatenate((self.lhs, self.zs), axis = 1)
+        self.lhs[self.constraintIndex][self.col] = 1
+        
+
+        if self.opt == "MAX":
+            self.obj = np.append(self.obj, -self.biggestValue)
+        
+        else:
+            self.obj = np.append(self.obj, self.biggestValue)
+
+            
+        self.artificialVarIndices.append(self.col)
+        self.basicVarIndices.append(self.col)
+
+        self.dir[self.constraintIndex] = "EQ"
 
 
     def makeRhsPositive(self):
@@ -107,16 +161,21 @@ class Simplex:
                 
                 if self.dir[i] == "LE":
                     self.addSlackVar(i)
+                    self.varNames.append(f"S{i+1}")
 
                 elif self.dir[i] == "GE":
                     self.addSurplusVar(i)
-                    #self.addArtificialVar(i)
+                    self.varNames.append(f"S{i+1}")
+                    self.addArtificialVar(i)
+                    self.varNames.append(f"R{i+1}")
 
                 else:
-                    #self.addArtificialVar(i)
-                    pass
+                    self.addArtificialVar(i)
+                    self.varNames.append(f"R{i+1}")
 
             self.isItStandard = True
+            
+        return self.varNames
             
 
     def getEnterVarIndex(self):
@@ -181,18 +240,18 @@ class Simplex:
         
         
     def singleIteration(self):
-           
+        
         if self.isOptimized == True:
             print("The problem is optimized")
             
         else:
             self.update()
             
-"""
+            
+
 obj = np.array([5,10])
 lhs = np.array([[3,6], [8,6], [2,3]])
 rhs = np.array([120, 240, 210])
 dir = ["LE", "LE", "LE"]
 opt = "MAX"
 s = Simplex(obj, lhs, rhs, dir, opt)
-"""
