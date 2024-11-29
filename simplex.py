@@ -279,7 +279,7 @@ Arguments:
 - lhs: The LHS of the constraints.
 - rhs: The RHS of the constraints.
 - dir: The directions of the constraints. Can be a vector of LE (<=), GE (>=), or EQ (==).
-- opt: The type of the optimization. Can be Maximize or Minimize.
+- opt: The type of the optimization. Can be Maximize (MAX) or Minimize (MIN).
 
 Returns:
 
