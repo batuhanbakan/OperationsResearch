@@ -22,9 +22,6 @@ class Simplex:
         self.basicVarIndices = []
         
         self.biggestValue = self.updateBiggestValue()
-        self.setVarNames()
-        self.solve()
-        self.solutionSet()
         
     def setVarNames(self):
         
@@ -253,6 +250,8 @@ class Simplex:
             self.update()
 
     def solve(self):
+
+        self.setVarNames()
         
         self.makeStandard()
 
@@ -260,6 +259,8 @@ class Simplex:
 
         while self.isOptimized == False:
             self.singleIteration()
+
+        return f"Objective Value is: {self.objValue}"
 
     def solutionSet(self):
         
@@ -308,5 +309,6 @@ dir = ["LE", "LE", "LE"]
 opt = "MAX"
 
 s = Simplex(obj, lhs, rhs, dir, opt)
+s.solve()
 ```
 """
